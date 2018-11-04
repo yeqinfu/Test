@@ -7,5 +7,7 @@ package com.ppandroid.openalipay;
 public class Base {
     public static String base_url="http://114.215.47.196:9050/";
     public static String url_load_task=base_url+"api/app/getOrder4createQrcode";
+    public static String url_post_qrcode=base_url+"api/app/saveQrcode";
+    public static String url_post_pay_success=base_url+"api/app/paySuccess";
 
 }
