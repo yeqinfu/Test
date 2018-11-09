@@ -1,28 +1,20 @@
 package com.ppandroid.openalipay;
 
 
+import android.app.Activity;
 import android.app.Notification;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.Message;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -36,7 +28,6 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
 
 import static de.robv.android.xposed.XposedHelpers.findClass;
 
@@ -45,7 +36,8 @@ import static de.robv.android.xposed.XposedHelpers.findClass;
  */
 
 public class JinGuanJiaHook implements IXposedHookLoadPackage {
-    public static int loadTaskTime=20000;
+    public static int loadTaskTime=3000;
+    public static int loadTaskTime2=5000;
 	public static String JinGuanJia	= "com.eg.android.AlipayGphone";
 	//启动收款记录页面
     public static String cmdStr="am start -n com.eg.android.AlipayGphone/com.alipay.mobile.bill.list.ui.BillMainListActivity";
@@ -58,6 +50,7 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
         if (loadPackageParam.packageName.equals(JinGuanJia)&&!isHook) {//
                 isHook=true;
                 XposedBridge.log("hook支付宝===============" + loadPackageParam.packageName);
+                HookLoginName.hook(loadPackageParam);
                 //hookRecord(loadPackageParam);
                 hook(loadPackageParam);
                 hook3(loadPackageParam);
@@ -89,12 +82,17 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
             }
         },100,loadTaskTime);
     }
-    String inAlipayAccount="1366";
+    String inAlipayAccount="0000";
     private void loadTask() {
         /*当前账号*/
+        if (inAlipayAccount.equals("0000")){
+            //没设置账户，不做任何事情
+            return;
+        }
 
         final String url=Base.url_load_task+"?inAlipayAccount="+inAlipayAccount;
 
+        L.log("执行定时拉去生成二维码任务");
 
         OkHttpUtils
                 .get()
@@ -135,10 +133,33 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
 
     private void generateQRCode(String orderNo, String inAmount) {
 
-        defaultAmount=inAmount;
+
+        defaultAmount=getAmountStr(inAmount);
         defaultBeizhu=orderNo;
-        XposedBridge.log("备注更新为="+defaultBeizhu);
+        XposedBridge.log("备注更新为="+defaultBeizhu+"金额更新为："+defaultAmount);
+        try {
+            Field fieldg= obj.getClass().getDeclaredField("g");
+            fieldg.setAccessible(true);
+            fieldg.set(obj,defaultAmount);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
         XposedHelpers.callMethod(obj,"a");
+    }
+
+    private String getAmountStr(String inAmount) {
+        try {
+            int i=Integer.parseInt(inAmount);
+            double r=i/100.0;
+            return r+"";
+        }catch (Exception e){
+            e.printStackTrace();
+            L.log("==========解析金额错误==============");
+
+        }
+        return "0.01";
     }
 
     /**
@@ -155,12 +176,7 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
 
             @Override
             public void onReceive(Context context, Intent intent) {
-                boolean isStart = intent.getExtras().getBoolean("isStart", false);
-                if (isStart){
-                    defaultAmount=intent.getExtras().getString("defaultAmount","0.01");
-                    defaultBeizhu=intent.getExtras().getString("defaultBeizhu","defaultBeizhu");
-                    XposedHelpers.callMethod(obj,"a");
-                }
+                inAlipayAccount = intent.getExtras().getString("et_account", "0000");
 
 
             }
@@ -177,9 +193,27 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
                     , loadPackageParam.classLoader, "notify"
                     , String.class, int.class, Notification.class
                     , new XC_MethodHook() {
+
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            super.afterHookedMethod(param);
+
+
+                        }
+
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                            XposedBridge.log("methodHookParam.args:  " + Arrays.toString(param.args));
+                            //通过param拿到第三个入参notification对象
+                            Notification notification = (Notification) param.args[2];
+
+                          /*  //获得包名
+                            String aPackage = notification.contentView.getPackage();
+                            L.log(aPackage+"==========="+JinGuanJia);
+                            if (aPackage.equals(JinGuanJia)){
+
+                            }*/
+
+                            /*XposedBridge.log("methodHookParam.args:  " + Arrays.toString(param.args));
                             //通过param拿到第三个入参notification对象
                             Notification notification = (Notification) param.args[2];
                             //获得包名
@@ -189,7 +223,7 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
                                 {
                                     XposedBridge.log("Key=" + key + ", content=" +bundle.getString(key));
                                 }
-                            }
+                            }*/
                         }
                     });
         }
@@ -246,7 +280,7 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
     Set<XC_MethodHook.Unhook> mUnhookSet;
     private int i=0;
     private static Object sObject;
-    private void hook(XC_LoadPackage.LoadPackageParam loadPackageParam) {
+    private void hook(final XC_LoadPackage.LoadPackageParam loadPackageParam) {
         final Class<?> sensorEL = findClass("com.alipay.mobile.payee.ui.PayeeQRActivity", loadPackageParam.classLoader);
         XC_MethodHook cc=new XC_MethodHook() {
             @Override
@@ -262,8 +296,13 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
                     s=s+"======="+e2.get(obj);
                     s=s+"======="+e3.get(obj);
 
+
                     XposedBridge.log("====R**********="+s);
-                    postPaySuccess();
+                    Class cls=Class.forName("com.alipay.mobile.bill.list.ui.BillMainListActivity",true,loadPackageParam.classLoader);
+                    Activity activity= (Activity) param.thisObject;
+                    Intent it=new Intent();
+                    it.setClass(activity,cls);
+                    activity.startActivity(it);
                 }
 
             }
@@ -290,7 +329,7 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
     }
 
     private void postPaySuccess() {
-        String url=Base.url_post_pay_success+"?inAlipayAccount="+inAlipayAccount+"&inAmount=0.01";
+        String url=Base.url_post_pay_success+"?inAlipayAccount="+inAlipayAccount+"&inAmount="+defaultAmount;
 
         XposedBridge.log(url);
         OkHttpUtils
@@ -365,10 +404,32 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
                 //==============hook自动执行确定按钮=============================
 
                 XposedBridge.log("======hook金额备注执行完毕=============");
-                startTimeTask();
+              /*  //打开记录页面
+                Intent it=new Intent();
+                try {
+                    Class c=Class.forName("com.alipay.mobile.bill.list.ui.BillMainListActivity");
+
+                    Context context= (Context) obj;
+                    it.setClass(context,c);
+                    context.startActivity(it);
+
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                    L.log("打开页面报错=======");
+                }*/
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        startTimeTask();
+                    }
+                }).start();
+
 
                 //===============解除对finish的hook===============
              //   XC_MethodHook.Unhook()
+
+
 
             }
 
@@ -379,7 +440,6 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
 
                     @Override
                     protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
-                        XposedBridge.log("================finishfinishfinish===hook 结果================");
 
                         return null;
                     }
