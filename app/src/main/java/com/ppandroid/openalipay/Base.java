@@ -10,5 +10,6 @@ public class Base {
     public static String url_post_qrcode=base_url+"api/app/saveQrcode";
     public static String url_post_pay_success=base_url+"api/app/paySuccess";
     public static String url_upload_record=base_url+"api/app/paySuccess";
+    public static String account="";
 
 }
