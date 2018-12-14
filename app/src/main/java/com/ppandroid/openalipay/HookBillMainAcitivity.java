@@ -36,6 +36,8 @@ public class HookBillMainAcitivity {
         String title="";
         String bizInNo="";
         String comsumeFee="+0.01";
+        String createTime="";
+        String createDesc="";
         String account="";
     }
     static Object reloadObj=null;
@@ -74,13 +76,18 @@ public class HookBillMainAcitivity {
                     L.log(saveList.size()+"======save---size===");
                     Object obj=param.args[0];
 
+
                     Field field=obj.getClass().getDeclaredField("consumeTitle");
                     Field field2=obj.getClass().getDeclaredField("bizInNo");
                     Field field3=obj.getClass().getDeclaredField("consumeFee");
+                    Field field4=obj.getClass().getDeclaredField("createDesc");
+                    Field field5=obj.getClass().getDeclaredField("createTime");
                     Model model=new Model();
                     model.title=field.get(obj)+"";
                     model.bizInNo=field2.get(obj)+"";
                     model.comsumeFee=field3.get(obj)+"";
+                    model.createTime=field5.get(obj)+"";
+                    model.createDesc=field4.get(obj)+"";
                     model.account=Base.account;
                     saveList.add(model);
 
