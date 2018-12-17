@@ -246,10 +246,11 @@ public class HookBillMainAcitivity {
         if (!saveList.isEmpty()){
             Gson gson=new Gson();
             String ss=gson.toJson(saveList);
-            String url=Base.url_upload_record+"?orders="+ss;
+            String url=Base.url_upload_record;
             L.log(url);
             OkHttpUtils
-                    .get()
+                    .post()
+                    .addParams("orders",ss)
                     .url(url)
                     .build()
                     .execute(new StringCallback(){
