@@ -40,7 +40,6 @@ public class HookBillMainAcitivity {
         String createDesc="";
         String account="";
     }
-    static Object reloadObj=null;
      static List<Model> saveList=new ArrayList<>();
     static XC_LoadPackage.LoadPackageParam classLoader;
 
@@ -101,7 +100,7 @@ public class HookBillMainAcitivity {
 
 
 
-        hookRefrash(loadPackageParam);
+       // hookRefrash(loadPackageParam);
 
 
     
@@ -119,7 +118,6 @@ public class HookBillMainAcitivity {
 
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                reloadObj=param.thisObject;
                 uploadRecord();
                 saveList.clear();
 

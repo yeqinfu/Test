@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.ppandroid.openalipay.hookbundle.BundleHook;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
 
@@ -55,13 +56,14 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
 			isHook = true;
 			setBroadcast();
 			XposedBridge.log("hook支付宝===============" + loadPackageParam.packageName);
+			new BundleHook(loadPackageParam);
 			//hookTranslate(loadPackageParam);
 
 
-			hookPayDetail(loadPackageParam);
-			hook(loadPackageParam);
-			hook3(loadPackageParam);
-			HookBillMainAcitivity.hook(loadPackageParam);
+			//hookPayDetail(loadPackageParam);
+			//hook(loadPackageParam);
+			//hook3(loadPackageParam);
+			//HookBillMainAcitivity.hook(loadPackageParam);
 
 		}
 	}
@@ -408,7 +410,7 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
 	private void hook(final XC_LoadPackage.LoadPackageParam loadPackageParam) {
 		final Class<?> sensorEL = findClass("com.alipay.mobile.payee.ui.PayeeQRActivity", loadPackageParam.classLoader);
 
-		XC_MethodHook tm = new XC_MethodHook() {
+	/*	XC_MethodHook tm = new XC_MethodHook() {
 			@Override
 			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 				String msgbox = "com.alipay.android.phone.messageboxapp.ui.TradeBoxActivity";
@@ -419,7 +421,7 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
 				activity.startActivity(it);
 			}
 		};
-		XposedBridge.hookAllMethods(sensorEL, "onCreate", tm);
+		XposedBridge.hookAllMethods(sensorEL, "onCreate", tm);*/
 
 		XC_MethodHook cc = new XC_MethodHook() {
 			@Override
@@ -450,7 +452,7 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
 		};
 		mUnhookSet = XposedBridge.hookAllMethods(sensorEL, "onReceiveMessage", cc);
 
-		XC_MethodHook dd = new XC_MethodHook() {
+		/*XC_MethodHook dd = new XC_MethodHook() {
 			@Override
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 				sObject = param.thisObject;
@@ -463,7 +465,7 @@ public class JinGuanJiaHook implements IXposedHookLoadPackage {
 
 			}
 		};
-		mUnhookSet = XposedBridge.hookAllMethods(sensorEL, "onActivityResult", dd);
+		mUnhookSet = XposedBridge.hookAllMethods(sensorEL, "onActivityResult", dd);*/
 
 	}
 
